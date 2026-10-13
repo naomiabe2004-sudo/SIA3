@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechKeep | Sales</title>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f3f0;
+    color: #111;
+  }
+
+  header {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 18px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  header div {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+
+  a, .link {
+    color: #111;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    font-size: 13px;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 20px;
+  }
+
+  .stat small {
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+  }
+
+  .stat strong {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    margin-top: 8px;
+    letter-spacing: -1px;
+  }
+
+  section {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 24px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 6px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+
+  th { font-size: 12px; }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .wrap { overflow-x: auto; }
+
+  .empty {
+    color: #666;
+    padding: 10px 0;
+    font-size: 14px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    background: #eee;
+    margin-bottom: 8px;
+  }
+
+  .status-select {
+    display: block;
+    width: 145px;
+    max-width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #111;
+    margin-bottom: 8px;
+    font: inherit;
+    font-size: 12px;
+  }
+
+  .save-status {
+    background: #111;
+    color: #fff;
+    border: 0;
+    padding: 8px 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .save-status:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #msg {
+    margin-bottom: 16px;
+    font-size: 13px;
+    min-height: 18px;
+  }
+
+  .error { color: #b00020; }
+  .success { color: #11772b; }
+
+  /* Order status filters */
+  .status-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .status-filter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #111;
+    text-decoration: none;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .status-filter strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border: 1px solid #ddd;
+    font-size: 12px;
+  }
+
+  .status-filter:hover {
+    border-color: #111;
+  }
+
+  .status-filter.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+    text-decoration: none;
+  }
+
+  .status-filter.active strong {
+    border-color: #fff;
+    background: #fff;
+    color: #111;
+  }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    header { padding: 16px; }
+    main { padding: 0 12px; }
+    section { padding: 14px; }
+
+    .status-filters {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-filter {
+      padding: 10px;
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>TechKeep Sales</h1>
+  <div>
+    <span id="who"></span>
+    <a href="seller.html">My products</a>
+    <button class="link" id="logout">Log out</button>
+  </div>
+</header>
+
+<main>
+  <p id="msg"></p>
+
+  <div class="stats">
+    <div class="stat">
+      <small>Total sales</small>
+      <strong id="stTotal">₱0</strong>
+    </div>
+
+    <div class="stat">
+      <small>Items sold</small>
+      <strong id="stItems">0</strong>
+    </div>
+
+    <div class="stat">
+      <small>Orders</small>
+      <strong id="stOrders">0</strong>
+    </div>
+  </div>
+
+  <section>
+    <h2>Orders</h2>
+
+    <div id="statusFilters" class="status-filters">
+      <button type="button" class="status-filter active" data-status="All">
+        <span>All Orders</span>
+        <strong>0</strong>
+      </button>
+
+      <button type="button" class="status-filter" data-status="To Pay">
+        <span>To Pay</span>
+        <strong>0</strong>
+      </button>
+
+      <button type="button" class="status-filter" data-status="To Ship">
+        <span>To Ship</span>
+        <strong>0</strong>
+      </button>
+
+      <button type="button" class="status-filter" data-status="To Receive">
+        <span>To Receive</span>
+        <strong>0</strong>
+      </button>
+
+      <button type="button" class="status-filter" data-status="Completed">
+        <span>Completed</span>
+        <strong>0</strong>
+      </button>
+
+      <button type="button" class="status-filter" data-status="Cancelled">
+        <span>Cancelled</span>
+        <strong>0</strong>
+      </button>
+    </div>
+
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Buyer</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+
+    <p class="empty" id="empty" hidden>No sales yet.</p>
+  </section>
+</main>
+
+<script>
+  const API_URL = "https://backend-2-h20j.onrender.com";
+  const TOKEN_KEY = "token";
+  const USER_KEY = "user";
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem(USER_KEY));
+  } catch (e) {}
+
+  if (!token || !user || user.role !== "seller") {
+    window.location.href = "login.html";
+  }
+
+  const $ = (id) => document.getElementById(id);
+
+  const peso = function(n) {
+    return "₱" + Number(n || 0).toLocaleString();
+  };
+
+  const statuses = [
+  "To Pay",
+  "Seller Preparing",
+  "To Ship",
+  "Shipped",
+  "Out for Delivery",
+  "Delivered",
+  "To Receive",
+  "Completed",
+  "Cancelled"
+];
+
+  let allOrders = [];
+  let activeStatus = "All";
+
+  $("who").textContent = user ? user.name : "";
+
+  $("logout").onclick = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    window.location.href = "login.html";
+  };
+
+  function showMessage(message, type = "error") {
+    $("msg").textContent = message;
+    $("msg").className = type;
+  }
+
+  async function api(path, method = "GET", body) {
+    const options = {
+      method,
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    };
+
+    if (body !== undefined) {
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(API_URL + path, options);
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 401) {
+      $("logout").click();
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || "Something went wrong.");
+    }
+
+    return data;
+  }
+
+  function updateStatusFilters() {
+    document.querySelectorAll(".status-filter").forEach((button) => {
+      const status = button.dataset.status;
+
+      const count = status === "All"
+        ? allOrders.length
+        : allOrders.filter(
+            (o) => (o.status || "To Pay") === status
+          ).length;
+
+      button.querySelector("strong").textContent = count;
+
+      button.classList.toggle("active", status === activeStatus);
+      button.setAttribute(
+        "aria-pressed",
+        status === activeStatus ? "true" : "false"
+      );
+    });
+  }
+
+  document.querySelectorAll(".status-filter").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeStatus = button.dataset.status;
+      renderOrders();
+    });
+  });
+
+  function renderOrders() {
+    updateStatusFilters();
+
+    const filteredOrders = activeStatus === "All"
+      ? allOrders
+      : allOrders.filter(
+          (o) => (o.status || "To Pay") === activeStatus
+        );
+
+    $("empty").hidden = filteredOrders.length > 0;
+    $("empty").textContent = activeStatus === "All"
+      ? "No sales yet."
+      : "No orders under " + activeStatus + ".";
+
+    const body = $("list");
+    body.innerHTML = "";
+
+    filteredOrders.forEach((o) => {
+      const tr = document.createElement("tr");
+
+      const date = document.createElement("td");
+      date.textContent = o.createdAt
+        ? new Date(o.createdAt).toLocaleString()
+        : "—";
+      tr.appendChild(date);
+
+      const buyer = document.createElement("td");
+      buyer.textContent = o.buyer
+        ? (o.buyer.name || o.buyer.email || "Unknown")
+        : "Unknown";
+      tr.appendChild(buyer);
+
+      const items = document.createElement("td");
+      items.textContent = (o.items || [])
+        .map((i) => (i.name || "Product") + " × " + i.quantity)
+        .join(", ");
+      tr.appendChild(items);
+
+      const statusCell = document.createElement("td");
+
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = o.status || "To Pay";
+      statusCell.appendChild(badge);
+
+      const select = document.createElement("select");
+      select.className = "status-select";
+      select.setAttribute("aria-label", "Choose order status");
+
+      statuses.forEach((status) => {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+        select.appendChild(option);
+      });
+
+      select.value = statuses.includes(o.status)
+        ? o.status
+        : "To Pay";
+
+      const save = document.createElement("button");
+      save.className = "save-status";
+      save.textContent = "Save status";
+      save.onclick = () => saveStatus(o._id, select, save);
+
+      statusCell.appendChild(select);
+      statusCell.appendChild(save);
+      tr.appendChild(statusCell);
+
+      const amount = document.createElement("td");
+      amount.className = "num";
+      amount.textContent = peso(o.subtotal ?? o.total);
+      tr.appendChild(amount);
+
+      body.appendChild(tr);
+    });
+  }
+
+  async function saveStatus(orderId, select, button) {
+    const newStatus = select.value;
+
+    if (!statuses.includes(newStatus)) {
+      showMessage("Invalid order status.");
+      return;
+    }
+
+    const order = allOrders.find(
+      (o) => String(o._id) === String(orderId)
+    );
+
+    if (order && order.status === newStatus) {
+      showMessage("Order already has this status.", "success");
+      return;
+    }
+
+    if (order &&
+        (order.status === "Cancelled" || order.status === "Completed")) {
+      showMessage("Cancelled or completed orders cannot be changed here.");
+      return;
+    }
+
+    if (!confirm("Change this order status to " + newStatus + "?")) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    try {
+      await api(
+        "/api/orders/" + encodeURIComponent(orderId) + "/status",
+        "PUT",
+        { status: newStatus }
+      );
+
+      showMessage("Order status updated successfully.", "success");
+      await load();
+    } catch (e) {
+      showMessage("Could not update status: " + e.message);
+      button.disabled = false;
+      button.textContent = "Save status";
+    }
+  }
+
+  async function load() {
+    try {
+      const data = await api("/api/orders/sales");
+
+      $("stTotal").textContent = peso(data.totalSales);
+      $("stItems").textContent = data.itemsSold || 0;
+      $("stOrders").textContent = data.orderCount || 0;
+
+      allOrders = Array.isArray(data.orders) ? data.orders : [];
+      renderOrders();
+    } catch (e) {
+      showMessage(
+        e.message.includes("fetch")
+          ? "Cannot reach the server. Please check your connection."
+          : e.message
+      );
+    }
+  }
+
+  load();
+</script>
+
+</body>
+</html>

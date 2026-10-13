@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechKeep | Seller Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #f3f3f0; color: #111; }
+  header { background: #fff; border-bottom: 1px solid #ddd; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+  header div { display: flex; gap: 16px; align-items: center; font-size: 13px; }
+  a, .link { color: #111; font-weight: 700; text-decoration: underline; cursor: pointer; background: none; border: 0; font-size: 13px; }
+  main { max-width: 1000px; margin: 32px auto; padding: 0 20px; display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  section { background: #fff; border: 1px solid #ddd; padding: 24px; }
+  h2 { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 700; margin: 14px 0 6px; }
+  input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; font: inherit; font-size: 14px; }
+  input:focus, textarea:focus, button:focus-visible { outline: 2px solid #111; outline-offset: 1px; }
+  textarea { resize: vertical; min-height: 70px; }
+  .btn { background: #111; color: #fff; border: 0; padding: 12px; width: 100%; margin-top: 18px; font-weight: 700; cursor: pointer; }
+  .btn.light { background: #fff; color: #111; border: 1px solid #111; margin-top: 8px; }
+  #msg { margin-top: 12px; font-size: 13px; min-height: 18px; }
+  .err { color: #b00020; } .ok { color: #11772b; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  th { font-size: 12px; }
+  .num { text-align: right; white-space: nowrap; }
+  .acts { white-space: nowrap; text-align: right; }
+  .acts button { margin-left: 10px; }
+  .empty { color: #666; padding: 20px 0; font-size: 14px; }
+  .wrap { overflow-x: auto; }
+  .thumb { width: 56px; height: 56px; object-fit: cover; background: #eee; display: block; }
+  .noimg { width: 56px; height: 56px; background: #eee; display: grid; place-items: center; font-size: 10px; color: #888; }
+  #preview { width: 100%; max-height: 200px; object-fit: contain; background: #f3f3f0; margin-top: 10px; display: block; }
+  #removeImg { margin-top: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TechKeep</h1>
+  <div>
+    <span id="who"></span>
+    <a href="sales.html">Sales</a>
+    <button class="link" id="logout">Log out</button>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2 id="formTitle">Add a product</h2>
+    <div>
+      <label for="name">Name</label>
+      <input id="name" maxlength="100">
+      <label for="description">Description</label>
+      <textarea id="description"></textarea>
+      <label for="price">Price (₱)</label>
+      <input id="price" type="number" min="0" step="0.01">
+      <label for="stock">Stock</label>
+      <input id="stock" type="number" min="0" step="1" value="0">
+
+      <label for="imageFile">Picture</label>
+      <input id="imageFile" type="file" accept="image/*">
+      <img id="preview" alt="Product preview" hidden>
+      <button class="link" id="removeImg" type="button" hidden>Remove picture</button>
+
+      <button class="btn" id="save">Add product</button>
+      <button class="btn light" id="cancel" hidden>Cancel edit</button>
+      <p id="msg"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your products</h2>
+    <div class="wrap">
+      <table>
+        <thead><tr><th></th><th>Name</th><th class="num">Price</th><th class="num">Stock</th><th></th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="empty" hidden>You have no products yet. Add your first one using the form.</p>
+  </section>
+
+</main>
+
+<script>
+  // ===== SETTINGS: must match what login.html uses =====
+ const API_URL = "https://backend-2-h20j.onrender.com";
+  const TOKEN_KEY = "token";
+  const USER_KEY = "user";
+  // =====================================================
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem(USER_KEY)); } catch (e) {}
+
+  if (!token || !user || (user.role !== "seller" && user.role !== "admin")) {
+    window.location.replace("login.html");
+  }
+
+  const $ = (id) => document.getElementById(id);
+  let products = [];
+  let editingId = null;
+  let currentImage = "";   // the picture that will be saved
+
+  $("who").textContent = user ? user.name : "";
+
+  $("logout").onclick = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    window.location.replace("login.html");
+  };
+
+  function say(text, ok) {
+    $("msg").textContent = text;
+    $("msg").className = ok ? "ok" : "err";
+  }
+
+  async function api(path, method, body) {
+    const res = await fetch(API_URL + path, {
+      method: method || "GET",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { $("logout").click(); }
+    if (!res.ok) throw new Error(data.message || "Something went wrong.");
+    return data;
+  }
+
+  // ----- Picture handling -----
+  function showPreview() {
+    $("preview").hidden = !currentImage;
+    $("removeImg").hidden = !currentImage;
+    if (currentImage) $("preview").src = currentImage;
+  }
+
+  // Shrinks the picture so it is light enough to save (max 700px wide/tall)
+  function shrinkImage(file, max) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read the picture."));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("That file is not a valid picture."));
+        img.onload = () => {
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  $("imageFile").onchange = async () => {
+    const file = $("imageFile").files[0];
+    if (!file) return;
+    try {
+      currentImage = await shrinkImage(file, 700);
+      showPreview();
+      say("", true);
+    } catch (e) {
+      say(e.message, false);
+    }
+  };
+
+  $("removeImg").onclick = () => {
+    currentImage = "";
+    $("imageFile").value = "";
+    showPreview();
+  };
+
+  // ----- Product list -----
+  function render() {
+    const body = $("list");
+    body.innerHTML = "";
+    $("empty").hidden = products.length > 0;
+    products.forEach((p) => {
+      const tr = document.createElement("tr");
+
+      const pic = document.createElement("td");
+      if (p.image) {
+        const im = document.createElement("img");
+        im.className = "thumb"; im.src = p.image; im.alt = p.name;
+        pic.appendChild(im);
+      } else {
+        const none = document.createElement("div");
+        none.className = "noimg"; none.textContent = "No pic";
+        pic.appendChild(none);
+      }
+
+      const name = document.createElement("td");
+      name.textContent = p.name;
+      const price = document.createElement("td");
+      price.className = "num";
+      price.textContent = "₱" + Number(p.price).toLocaleString();
+      const stock = document.createElement("td");
+      stock.className = "num";
+      stock.textContent = p.stock;
+      const acts = document.createElement("td");
+      acts.className = "acts";
+      const edit = document.createElement("button");
+      edit.className = "link"; edit.textContent = "Edit";
+      edit.onclick = () => startEdit(p);
+      const del = document.createElement("button");
+      del.className = "link"; del.textContent = "Delete";
+      del.onclick = () => remove(p);
+      acts.append(edit, del);
+      tr.append(pic, name, price, stock, acts);
+      body.appendChild(tr);
+    });
+  }
+
+  async function load() {
+    try {
+      products = await api("/api/products/mine");
+      render();
+    } catch (e) {
+      say(e.message.includes("fetch") ? "Cannot reach the server. Is it running?" : e.message, false);
+    }
+  }
+
+  function startEdit(p) {
+    editingId = p._id;
+    $("name").value = p.name;
+    $("description").value = p.description || "";
+    $("price").value = p.price;
+    $("stock").value = p.stock;
+    currentImage = p.image || "";
+    $("imageFile").value = "";
+    showPreview();
+    $("formTitle").textContent = "Edit product";
+    $("save").textContent = "Save changes";
+    $("cancel").hidden = false;
+    say("", true);
+    $("name").focus();
+  }
+
+  function resetForm() {
+    editingId = null;
+    ["name", "description", "price"].forEach((id) => ($(id).value = ""));
+    $("stock").value = 0;
+    $("imageFile").value = "";
+    currentImage = "";
+    showPreview();
+    $("formTitle").textContent = "Add a product";
+    $("save").textContent = "Add product";
+    $("cancel").hidden = true;
+  }
+
+  $("cancel").onclick = () => { resetForm(); say("", true); };
+
+  $("save").onclick = async () => {
+    const name = $("name").value.trim();
+    const price = $("price").value;
+    if (!name || price === "") return say("Enter a name and a price.", false);
+    const payload = {
+      name,
+      description: $("description").value.trim(),
+      price: Number(price),
+      stock: Number($("stock").value || 0),
+      image: currentImage,
+    };
+    try {
+      if (editingId) {
+        await api("/api/products/" + editingId, "PUT", payload);
+        say("Changes saved.", true);
+      } else {
+        await api("/api/products", "POST", payload);
+        say("Product added.", true);
+      }
+      resetForm();
+      load();
+    } catch (e) {
+      say(e.message, false);
+    }
+  };
+
+  async function remove(p) {
+    if (!confirm('Delete "' + p.name + '"?')) return;
+    try {
+      await api("/api/products/" + p._id, "DELETE");
+      if (editingId === p._id) resetForm();
+      say("Product deleted.", true);
+      load();
+    } catch (e) {
+      say(e.message, false);
+    }
+  }
+
+  // Keep the Back button on this dashboard
+  const HOME = user && user.role === "admin" ? "admin.html" : "seller.html";
+  history.replaceState(null, "", location.href);
+  history.pushState(null, "", location.href);
+  window.addEventListener("popstate", () => {
+    window.location.replace(HOME);
+  });
+
+  load();
+</script>
+</body>
+</html>

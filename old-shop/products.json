@@ -1,0 +1,102 @@
+[
+  {
+    "id": 5,
+    "name": "Adidas CNY Tang Jacket",
+    "category": "Clothing",
+    "type": "Jacket",
+    "price": 6500,
+    "sizes": ["S", "M", "L", "XL"],
+    "description": "Adidas CNY Tang Jacket featuring a stylish Chinese New Year inspired design, suitable for casual everyday wear.",
+    "image": "images/adidas-cny-tang-jacket.jpg"
+  },
+  {
+    "id": 6,
+    "name": "Multi-Pocket Messenger Bag",
+    "category": "Accessories",
+    "type": "Bag",
+    "price": 499,
+    "sizes": ["One Size"],
+    "description": "Practical messenger bag with multiple pockets and a compact design for carrying personal essentials.",
+    "image": "images/multi-pocket-messenger-bag.jpg"
+  },
+  {
+    "id": 7,
+    "name": "PUMA Speedcat Ballet",
+    "category": "Shoes",
+    "type": "Sneakers",
+    "price": 5200,
+    "sizes": ["5", "6", "7", "8", "9", "10"],
+    "description": "Low-profile PUMA sneakers combining ballet-inspired details with the iconic Speedcat racing design.",
+    "image": "images/puma-speedcat-ballet.jpg"
+  },
+  {
+    "id": 8,
+    "name": "C&K Carli Card Holder",
+    "category": "Accessories",
+    "type": "Wallet",
+    "price": 1399,
+    "sizes": ["One Size"],
+    "description": "A compact leather card holder with multiple card slots and a clean, minimalist design.",
+    "image": "images/charles-keith-carli-card-holder.jpg"
+  },
+  {
+    "id": 9,
+    "name": "Vintage Embroidered Cap",
+    "category": "Accessories",
+    "type": "Cap",
+    "price": 299,
+    "sizes": ["One Size"],
+    "description": "A vintage-inspired embroidered cap with an adjustable strap and comfortable fit.",
+    "image": "images/vintage-embroidered-cap.jpeg"
+  },
+  {
+    "id": 10,
+    "name": "Lightweight Runner Shoes",
+    "category": "Shoes",
+    "type": "Running Shoes",
+    "price": 999,
+    "sizes": ["7", "8", "9", "10"],
+    "description": "Lightweight running shoes with a comfortable fit, suitable for jogging, exercise and everyday active use.",
+    "image": "images/lightweight-runner-shoes.jpg"
+  },
+  {
+    "id": 11,
+    "name": "Everyday Ankle Socks",
+    "category": "Accessories",
+    "type": "Socks",
+    "price": 149,
+    "sizes": ["S", "M", "L"],
+    "description": "Comfortable ankle socks designed for casual use and suitable for different types of footwear.",
+    "image": "images/everyday-ankle-socks.jpg"
+  },
+  {
+    "id": 12,
+    "name": "Urban Court Shoes",
+    "category": "Shoes",
+    "type": "Basketball Shoes",
+    "price": 699,
+    "sizes": ["7", "8", "9", "10", "11"],
+    "description": "Stylish court-inspired shoes with a modern design, suitable for casual activities and light sports.",
+    "image": "images/urban-court-shoes.jpg"
+  },
+  {
+    "id": 13,
+    "name": "Classic Pullover Hoodie",
+    "category": "Clothing",
+    "type": "Hoodie",
+    "price": 899,
+    "sizes": ["S", "M", "L", "XL"],
+    "description": "A classic pullover hoodie with a comfortable fit and clean design.",
+    "image": "images/classic-pullover-hoodie.jpg"
+  },
+  {
+    "id": 14,
+    "name": "Premium Style Belt",
+    "category": "Accessories",
+    "type": "Belt",
+    "price": 199,
+    "sizes": ["One Size"],
+    "description": "A stylish premium-look belt with a clean and fashionable design, suitable for casual and everyday outfits.",
+    "image": "images/premium-style-belt.jpg"
+  }
+]

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechKeep | Admin Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #f3f3f0; color: #111; }
+  header { background: #fff; border-bottom: 1px solid #ddd; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+  header div { display: flex; gap: 16px; align-items: center; font-size: 13px; }
+  a, .link { color: #111; font-weight: 700; text-decoration: underline; cursor: pointer; background: none; border: 0; font-size: 13px; }
+  main { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { background: #fff; border: 1px solid #ccc; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tab.active { background: #111; color: #fff; border-color: #111; }
+  .tab:focus-visible, input:focus, select:focus, button:focus-visible { outline: 2px solid #111; outline-offset: 1px; }
+  section { background: #fff; border: 1px solid #ddd; padding: 24px; }
+  h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .sub { font-size: 13px; color: #555; margin-bottom: 16px; }
+  .tools { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  input, select { padding: 10px; border: 1px solid #ccc; font: inherit; font-size: 14px; background: #fff; }
+  input { width: 100%; max-width: 320px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  th { font-size: 12px; }
+  .num { text-align: right; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .empty { color: #666; padding: 20px 0; font-size: 14px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; background: #eee; }
+  .badge.seller { background: #ddeafc; color: #0c447c; }
+  .badge.admin { background: #111; color: #fff; }
+  .thumb { width: 44px; height: 44px; object-fit: cover; background: #eee; display: block; }
+  .noimg { width: 44px; height: 44px; background: #eee; display: grid; place-items: center; font-size: 9px; color: #888; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }
+  .stat { background: #f3f3f0; padding: 18px; }
+  .stat small { font-size: 12px; font-weight: 700; color: #555; }
+  .stat strong { display: block; font-size: 28px; font-weight: 800; margin-top: 8px; letter-spacing: -1px; }
+  #msg { margin: 0 0 16px; font-size: 13px; min-height: 18px; }
+  .err { color: #b00020; } .ok { color: #11772b; }
+  .small { font-size: 12px; color: #555; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TechKeep Admin</h1>
+  <div>
+    <span id="who"></span>
+    <button class="link" id="logout">Log out</button>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="users">Users and roles</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="audit">Audit logs</button>
+  </div>
+  <p id="msg"></p>
+
+  <section id="tab-overview">
+    <h2>System overview</h2>
+    <p class="sub">Numbers across the whole marketplace.</p>
+    <div class="stats">
+      <div class="stat"><small>Sellers</small><strong id="stSellers">0</strong></div>
+      <div class="stat"><small>Buyers</small><strong id="stBuyers">0</strong></div>
+      <div class="stat"><small>Products</small><strong id="stProducts">0</strong></div>
+      <div class="stat"><small>Orders</small><strong id="stOrders">0</strong></div>
+      <div class="stat"><small>Total sales</small><strong id="stSales">₱0</strong></div>
+    </div>
+  </section>
+
+  <section id="tab-users" hidden>
+    <h2>Users and roles</h2>
+    <p class="sub" id="userCount"></p>
+    <div class="tools">
+      <input id="userSearch" placeholder="Search by name or email" aria-label="Search users">
+      <select id="roleFilter" aria-label="Filter by role">
+        <option value="">All roles</option>
+        <option value="seller">Sellers</option>
+        <option value="buyer">Buyers</option>
+        <option value="admin">Admins</option>
+      </select>
+    </div>
+    <p class="small" style="margin-bottom:12px">After you change a role, that person must log out and log in again for it to take effect.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr></thead>
+        <tbody id="userList"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="userEmpty" hidden>No users found.</p>
+  </section>
+
+  <section id="tab-products" hidden>
+    <h2>All products</h2>
+    <p class="sub" id="count"></p>
+    <div class="tools">
+      <input id="search" placeholder="Search by product or seller" aria-label="Search products">
+    </div>
+    <div class="wrap">
+      <table>
+        <thead><tr><th></th><th>Name</th><th>Seller</th><th class="num">Price</th><th class="num">Stock</th><th></th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="empty" hidden>No products found.</p>
+  </section>
+
+  <section id="tab-audit" hidden>
+    <h2>Audit logs</h2>
+    <p class="sub">Important actions by admins and sellers. Newest first.</p>
+    <div class="tools">
+      <input id="auditSearch" placeholder="Search logs" aria-label="Search audit logs">
+      <button class="link" id="auditRefresh">Refresh</button>
+    </div>
+    <div class="wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Who</th><th>Role</th><th>Action</th><th>Details</th></tr></thead>
+        <tbody id="auditList"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="auditEmpty" hidden>No audit logs yet.</p>
+  </section>
+</main>
+
+<script>
+  // ===== SETTINGS =====
+  const API_URL = "https://backend-2-h20j.onrender.com";
+  const TOKEN_KEY = "token";
+  const USER_KEY = "user";
+  // ====================
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem(USER_KEY)); } catch (e) {}
+
+  if (!token || !user || user.role !== "admin") {
+    window.location.href = "login.html";
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const peso = (n) => "₱" + Number(n).toLocaleString();
+  let products = [];
+  let users = [];
+  let logs = [];
+
+  $("who").textContent = user ? user.name : "";
+  $("logout").onclick = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    window.location.href = "login.html";
+  };
+
+  function say(text, ok) {
+    $("msg").textContent = text;
+    $("msg").className = ok ? "ok" : "err";
+  }
+
+  async function api(path, method, body) {
+    const res = await fetch(API_URL + path, {
+      method: method || "GET",
+      headers: Object.assign(
+        { Authorization: "Bearer " + token },
+        body ? { "Content-Type": "application/json" } : {}
+      ),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) $("logout").click();
+    if (!res.ok) throw new Error(data.message || "Something went wrong.");
+    return data;
+  }
+
+  function fail(e) {
+    say(e.message.includes("fetch") ? "Cannot reach the server. Is it running?" : e.message, false);
+  }
+
+  // Tabs
+  const TABS = ["overview", "users", "products", "audit"];
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.onclick = () => {
+      document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+      TABS.forEach((name) => {
+        $("tab-" + name).hidden = name !== t.dataset.tab;
+      });
+      say("", true);
+      if (t.dataset.tab === "audit") loadAudit();
+    };
+  });
+
+  // Overview
+  async function loadStats() {
+    try {
+      const s = await api("/api/users/stats");
+      $("stSellers").textContent = s.sellers;
+      $("stBuyers").textContent = s.buyers;
+      $("stProducts").textContent = s.products;
+      $("stOrders").textContent = s.orders;
+      $("stSales").textContent = peso(s.totalSales);
+    } catch (e) { fail(e); }
+  }
+
+  // Users
+  function renderUsers() {
+    const q = $("userSearch").value.trim().toLowerCase();
+    const role = $("roleFilter").value;
+    const shown = users.filter((u) =>
+      (!role || u.role === role) &&
+      (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    );
+    $("userCount").textContent = users.length + " account" + (users.length === 1 ? "" : "s");
+    $("userEmpty").hidden = shown.length > 0;
+    const body = $("userList");
+    body.innerHTML = "";
+    shown.forEach((u) => {
+      const tr = document.createElement("tr");
+      [u.name, u.email].forEach((text) => {
+        const td = document.createElement("td");
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+
+      const roleTd = document.createElement("td");
+      const isMe = user && (u._id === user._id || u._id === user.id);
+      if (isMe) {
+        const badge = document.createElement("span");
+        badge.className = "badge " + u.role;
+        badge.textContent = u.role + " (you)";
+        roleTd.appendChild(badge);
+      } else {
+        const sel = document.createElement("select");
+        sel.setAttribute("aria-label", "Role for " + u.name);
+        ["buyer", "seller", "admin"].forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r;
+          opt.textContent = r;
+          sel.appendChild(opt);
+        });
+        sel.value = u.role;
+        sel.onchange = () => changeRole(u, sel.value, sel);
+        roleTd.appendChild(sel);
+      }
+      tr.appendChild(roleTd);
+
+      const joined = document.createElement("td");
+      joined.textContent = new Date(u.createdAt).toLocaleDateString();
+      tr.appendChild(joined);
+
+      const act = document.createElement("td");
+      act.className = "num";
+      if (u.role !== "admin") {
+        const del = document.createElement("button");
+        del.className = "link";
+        del.textContent = "Remove";
+        del.onclick = () => removeUser(u);
+        act.appendChild(del);
+      }
+      tr.appendChild(act);
+      body.appendChild(tr);
+    });
+  }
+
+  async function loadUsers() {
+    try {
+      users = await api("/api/users");
+      renderUsers();
+    } catch (e) { fail(e); }
+  }
+
+  async function changeRole(u, role, sel) {
+    if (!confirm('Change "' + u.name + '" to ' + role + '?')) {
+      sel.value = u.role;
+      return;
+    }
+    try {
+      await api("/api/users/" + u._id + "/role", "PUT", { role });
+      say("Role updated.", true);
+      loadUsers();
+      loadStats();
+    } catch (e) {
+      sel.value = u.role;
+      fail(e);
+    }
+  }
+
+  async function removeUser(u) {
+    const extra = u.role === "seller" ? " Their products will be deleted too." : "";
+    if (!confirm('Remove "' + u.name + '"?' + extra)) return;
+    try {
+      await api("/api/users/" + u._id, "DELETE");
+      say("User removed.", true);
+      loadUsers(); loadProducts(); loadStats();
+    } catch (e) { fail(e); }
+  }
+
+  // Products
+  function renderProducts() {
+    const q = $("search").value.trim().toLowerCase();
+    const shown = products.filter((p) =>
+      p.name.toLowerCase().includes(q) ||
+      ((p.seller && p.seller.name) || "").toLowerCase().includes(q)
+    );
+    $("count").textContent = products.length + " product" + (products.length === 1 ? "" : "s") + " in the shop";
+    $("empty").hidden = shown.length > 0;
+    const body = $("list");
+    body.innerHTML = "";
+    shown.forEach((p) => {
+      const tr = document.createElement("tr");
+
+      const pic = document.createElement("td");
+      if (p.image) {
+        const im = document.createElement("img");
+        im.className = "thumb"; im.src = p.image; im.alt = p.name;
+        pic.appendChild(im);
+      } else {
+        const none = document.createElement("div");
+        none.className = "noimg"; none.textContent = "No pic";
+        pic.appendChild(none);
+      }
+      tr.appendChild(pic);
+
+      const cells = [p.name, (p.seller && p.seller.name) || "Unknown", peso(p.price), p.stock];
+      cells.forEach((text, i) => {
+        const td = document.createElement("td");
+        if (i >= 2) td.className = "num";
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+
+      const act = document.createElement("td");
+      act.className = "num";
+      const del = document.createElement("button");
+      del.className = "link";
+      del.textContent = "Delete";
+      del.onclick = () => removeProduct(p);
+      act.appendChild(del);
+      tr.appendChild(act);
+      body.appendChild(tr);
+    });
+  }
+
+  async function loadProducts() {
+    try {
+      products = await api("/api/products");
+      renderProducts();
+    } catch (e) { fail(e); }
+  }
+
+  async function removeProduct(p) {
+    if (!confirm('Delete "' + p.name + '"?')) return;
+    try {
+      await api("/api/products/" + p._id, "DELETE");
+      say("Product deleted.", true);
+      loadProducts(); loadStats();
+    } catch (e) { fail(e); }
+  }
+
+  // Audit logs
+  function renderAudit() {
+    const q = $("auditSearch").value.trim().toLowerCase();
+    const shown = logs.filter((l) =>
+      (l.actorName + " " + l.actorRole + " " + l.action + " " + l.details).toLowerCase().includes(q)
+    );
+    $("auditEmpty").hidden = shown.length > 0;
+    const body = $("auditList");
+    body.innerHTML = "";
+    shown.forEach((l) => {
+      const tr = document.createElement("tr");
+
+      const time = document.createElement("td");
+      time.textContent = new Date(l.createdAt).toLocaleString();
+      time.style.whiteSpace = "nowrap";
+      tr.appendChild(time);
+
+      const who = document.createElement("td");
+      who.textContent = l.actorName;
+      tr.appendChild(who);
+
+      const roleTd = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = "badge " + l.actorRole;
+      badge.textContent = l.actorRole;
+      roleTd.appendChild(badge);
+      tr.appendChild(roleTd);
+
+      const action = document.createElement("td");
+      action.textContent = l.action;
+      tr.appendChild(action);
+
+      const details = document.createElement("td");
+      details.textContent = l.details;
+      tr.appendChild(details);
+
+      body.appendChild(tr);
+    });
+  }
+
+  async function loadAudit() {
+    try {
+      logs = await api("/api/audit");
+      renderAudit();
+    } catch (e) { fail(e); }
+  }
+
+  $("userSearch").oninput = renderUsers;
+  $("roleFilter").onchange = renderUsers;
+  $("search").oninput = renderProducts;
+  $("auditSearch").oninput = renderAudit;
+  $("auditRefresh").onclick = loadAudit;
+
+  loadStats();
+  loadUsers();
+  loadProducts();
+</script>
+</body>
+</html>
